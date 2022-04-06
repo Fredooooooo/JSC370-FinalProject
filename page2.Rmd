@@ -1,0 +1,11 @@
+---
+title: "JSC370 Final Project"
+author: "You Peng"
+date: "05/04/2022"
+output: 
+    html_document:
+        toc: TRUE
+        toc_float: TRUE
+---
+
+This is my JSC370 Final Project website.
