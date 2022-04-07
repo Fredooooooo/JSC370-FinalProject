@@ -4,7 +4,7 @@ navbar:
   title: "My Website"
   left:
     - text: "Home"
-      href: page3.html
+      href: index.html
     - text: "Final project page"
       href: page3.html
     - text: "Lab12 page"
