@@ -1,1 +1,14 @@
-# Hello World
+---
+title: "JSC370 Final Project"
+author: "You Peng"
+output: 
+    html_document:
+        toc: TRUE
+        toc_float: TRUE
+---
+
+<br>
+
+Hello World
+
+<br>

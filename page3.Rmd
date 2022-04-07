@@ -1,32 +1,73 @@
 ---
-title: "JSC370 Lab 12"
+title: "JSC370 Final Project"
 author: "You Peng"
-date: "05/04/2022"
 output: 
     html_document:
         toc: TRUE
         toc_float: TRUE
 ---
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message = F, warning = F)
-```
 
-This is my JSC370 Lab12 content.
+<br>
 
-# Interactive visuals
-```{r, warning=F, message=F}
-library(dplyr)
+This is my JSC370 Final Project website. I will showcase a few interactive visuals here.
+
+<br>
+
+```{r setup, message=FALSE, echo=FALSE, warning=FALSE}
+
 library(data.table)
 library(tidyverse)
 library(dplyr)
 library(plotly)
 library(DT)
 library(knitr)
-source("process_COVID_data.R")
-head(cv_states_today)
+
+# Initialize code chunk options
+opts_chunk$set(
+  warning = FALSE,
+  message = FALSE,
+  eval=TRUE,
+  echo = TRUE,
+  cache = FALSE,
+  fig.width = 7, 
+  fig.align = 'center',
+  fig.asp = 0.618,
+  out.width = "700px",
+  class.source = "code-r")
 ```
 
-```{r plot1, class.source="code-r-small", warning=F, echo=FALSE}
+```{css, echo = FALSE}
+.code-r { /* Code block */
+  font-size: 15px;
+}
+
+.code-r-small { /* Code block */
+  font-size: 10px;
+}
+```
+
+<br>
+
+## First step
+
+First I will source any necessary code, e.g. `process_covid_data.R`:
+
+```{r load-data}
+fn <- "https://raw.githubusercontent.com/JSC370/jsc370-2022/main/labs/lab12/process_COVID_data.R"
+if (!file.exists("process_COVID_data.R"))
+  download.file(fn, destfile = "process_COVID_data.R")
+source("process_COVID_data.R")
+```
+
+<br>
+
+## Second step
+
+Then I will add some code to create the **plotly** figures
+
+Note: You need to name each code chunk, like this one: `plot1`
+
+```{r plot1, class.source="code-r-small"}
 
 p1_scatter <- cv_states_today %>% 
   plot_ly(x = ~pop_density, y = ~deathsper100k,
@@ -54,45 +95,29 @@ p2_scatter <- cv_states_today_scatter %>%
          hovermode = "compare")
 ```
 
-```{r plot2, class.source="code-r-small", warning=F, echo=FALSE}
-p3 <- cv_states_today %>% ggplot(aes(x=pop_density, y=newper100k, color=state, size=population)) + geom_point()
+<br>
 
-p3_scatter <- ggplotly(p3)
-
-p4 <- cv_states_today %>% filter(state!="District of Columbia") %>% ggplot(aes(x=pop_density, y=newper100k, color=state, size=population)) + geom_point()
-
-p4_scatter <- ggplotly(p4)
-```
-
-
-
-## A set of plots {.tabset}
+## Third step {.tabset}
 
 Create tabs to display each figure
 
-### First Plot
+### Scatterplot: with DC
 
 ```{r p1}
 p1_scatter
 ```
 
-### Second Plot
+### Scatterplot: without DC
 
 ```{r p2}
 p2_scatter
 ```
 
-### Third Plot
-
-```{r p3}
-p3_scatter
-```
-
-### Fourth Plot
-
-```{r p4}
-p4_scatter
-```
-
 ## {-}
 
+<br>
+
+Done!
+
+<br>
+<br>
