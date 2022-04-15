@@ -13,111 +13,203 @@ This is my JSC370 Final Project website. I will present the result of Explorator
 
 <br>
 
-```{r setup, message=FALSE, echo=FALSE, warning=FALSE}
 
+```{r, message=FALSE, echo=FALSE, warning=FALSE}
 library(data.table)
 library(tidyverse)
+library(rdrop2)
+library(GGally)
+library(scales)
+
+library(openintro)
+library(kableExtra)
+library(car)
+
+library(readr)
 library(dplyr)
+library(ggplot2)
+
 library(plotly)
 library(DT)
 library(knitr)
-
-# Initialize code chunk options
+library(widgetframe)
 opts_chunk$set(
   warning = FALSE,
   message = FALSE,
   eval=TRUE,
   echo = TRUE,
-  cache = FALSE,
+  cache=FALSE,
+  include=TRUE,
   fig.width = 7, 
   fig.align = 'center',
   fig.asp = 0.618,
-  out.width = "700px",
-  class.source = "code-r")
+  out.width = "700px")
 ```
 
-```{css, echo = FALSE}
-.code-r { /* Code block */
-  font-size: 15px;
-}
+## Preliminary Results
+After cleaning and wrangling, there are 639 observations and 8 variables in the dataset, and the response variable is the average rank a tennis player achieved during the whole 2017 tournament period. The summary statistics for five numerical variables are given below, we can see that the mean height for all players is 185.3, which is much higher than the average height of men between 20 to 39 in US, which is 176.1 in that case (Fryer, 2018). This may suggest that a higher height could take advantage in tennis.
 
-.code-r-small { /* Code block */
-  font-size: 10px;
-}
+```{r, message=FALSE, echo=FALSE, warning=FALSE}
+tennis <- read.csv('data/cleaned_dataset.csv')
+tennis$handedness <- as.factor(tennis$handedness)
+tennis$backhand <- as.factor(tennis$backhand)
 ```
 
-<br>
-
-## First step
-
-First I will source any necessary code, e.g. `process_covid_data.R`:
-
-```{r load-data}
-fn <- "https://raw.githubusercontent.com/JSC370/jsc370-2022/main/labs/lab12/process_COVID_data.R"
-if (!file.exists("process_COVID_data.R"))
-  download.file(fn, destfile = "process_COVID_data.R")
-source("process_COVID_data.R")
+```{r, eval=FALSE, message=FALSE, echo=FALSE, warning=FALSE}
+dim(tennis)
+```
+```{r, eval=FALSE, message=FALSE, echo=FALSE, warning=FALSE}
+summary(tennis)
 ```
 
-<br>
-
-## Second step
-
-Then I will add some code to create the **plotly** figures
-
-Note: You need to name each code chunk, like this one: `plot1`
-
-```{r plot1, class.source="code-r-small"}
-
-p1_scatter <- cv_states_today %>% 
-  plot_ly(x = ~pop_density, y = ~deathsper100k,
-          type = 'scatter', mode = 'markers', color = ~state,
-          size = ~population, sizes = c(5, 70), marker = list(sizemode='diameter', opacity=0.5),
-          hoverinfo = 'text',
-          text = ~paste( paste(state, ":", sep=""), paste(" Cases per 100k: ", per100k, sep="") , paste(" Deaths per 100k: ",
-                        deathsper100k, sep=""), sep = "<br>")) %>%
-  layout(title = "Population-normalized COVID-19 deaths vs. population density",
-                  yaxis = list(title = "Deaths per 100k"), xaxis = list(title = "Population Density"),
-         hovermode = "compare")
-
-# filter out "District of Columbia"
-cv_states_today_scatter <- cv_states_today %>% filter(state!="District of Columbia")
-
-p2_scatter <- cv_states_today_scatter %>% 
-  plot_ly(x = ~pop_density, y = ~deathsper100k,
-          type = 'scatter', mode = 'markers', color = ~state,
-          size = ~population, sizes = c(5, 70), marker = list(sizemode='diameter', opacity=0.5),
-          hoverinfo = 'text',
-          text = ~paste( paste(state, ":", sep=""), paste(" Cases per 100k: ", per100k, sep="") , paste(" Deaths per 100k: ",
-                        deathsper100k, sep=""), sep = "<br>")) %>%
-  layout(title = "Population-normalized COVID-19 deaths vs. population density",
-                  yaxis = list(title = "Deaths per 100k"), xaxis = list(title = "Population Density"),
-         hovermode = "compare")
+```{r, eval=FALSE, message=FALSE, echo=FALSE, warning=FALSE}
+table(tennis$handedness)
+table(tennis$backhand)
 ```
 
-<br>
-
-## Third step {.tabset}
-
-Create tabs to display each figure
-
-### Scatterplot: with DC
-
-```{r p1}
-p1_scatter
+```{r, message=FALSE, echo=FALSE, warning=FALSE}
+mtr <- apply(tennis[,-c(1,7,8)], 2, mean)
+sdtr <- apply(tennis[,-c(1,7,8)], 2, sd)
 ```
 
-### Scatterplot: without DC
+Variable | mean (s.d.) in dataset 
+---------|-------------------------
+`r names(tennis)[2]` | `r round(mtr[1], 3)` (`r round(sdtr[1], 3)`)
+`r names(tennis)[3]` | `r round(mtr[2],3)` (`r round(sdtr[2],3)`)
+`r names(tennis)[4]` | `r round(mtr[3],3)` (`r round(sdtr[3],3)`)
+`r names(tennis)[5]` | `r round(mtr[4],3)` (`r round(sdtr[4],3)`)
+`r names(tennis)[6]` | `r round(mtr[5],3)` (`r round(sdtr[5],3)`)
 
-```{r p2}
-p2_scatter
+Table: Summary statistics for numerical variables in the dataset
+
+For numerical variables in dataset, their histograms are given in Figure 1. We found that the response variable is heavily right skewed, and the distribution of "average tourneys played" has a heavy tail on the left. These observations suggest that we may need to transform some variables later.
+
+```{r, message=FALSE, echo=FALSE, warning=FALSE, fig.cap="histogram for numerical variables"}
+par(mfrow=c(2,3))
+# response histogram
+hist(tennis$average_rank,xlab='average rank', main = 'histogram of average rank')
+# predictor histogram
+hist(tennis$weight_kg, xlab='weight', main = 'histogram of weight')
+hist(tennis$height_cm,xlab='height', main = 'histogram of height')
+hist(tennis$average_age,xlab='average age', main = 'histogram of average age')
+hist(tennis$average_tourneys_played,xlab='average tourneys played', main = 'histogram of average tourneys played')
 ```
+
+For binary variables in the dataset, their bar plots are given below. There are only 80 left-hand players where majority being right-hand players, and 104 one-handed backhand players where majority being two-handed backhand players. This indicates that data are very imbalanced in both variables. 
+
+```{r, message=FALSE, echo=FALSE, warning=FALSE, fig.height=3, fig.cap="Barplot for binary variables"}
+require(gridExtra)
+plot1 <- tennis %>% 
+  ggplot(aes(x=handedness)) +
+  geom_bar(fill = "skyblue3")
+plot2 <- tennis %>% 
+  ggplot(aes(x=backhand)) +
+  geom_bar(fill = "skyblue3")
+grid.arrange(plot1, plot2, ncol=2)
+```
+
+From plots presenting below, we can see a clear linear pattern in the scatterplot between average rank and average tourneys played. Since the slope is negative, this suggest that more tourneys a player has played, the better rank he is expected to have. The correlations in other plots are not very obvious to see from the plot, while the right-handed players may perform a little bit better than left-handed players since the median of them is a little bit larger.
+
+```{r, message=FALSE, echo=FALSE, warning=FALSE, fig.cap="plots showing correlations between each predictor and the response variable"}
+# scatter plots
+plot(tennis$weight_kg, tennis$average_rank, 
+     main="Average rank vs Weight of athletes in kg", 
+     xlab="Weight of athletes in kg", ylab = "Average rank")
+plot(tennis$height_cm, tennis$average_rank, 
+     main="Average rank vs Height of athletes in cm", 
+     xlab="Height of athletes in cm", ylab = "Average rank")
+plot(tennis$average_age, tennis$average_rank, 
+     main="Average rank vs Average age of athletes", 
+     xlab="Average age of athletes", ylab = "Average rank")
+plot(tennis$average_tourneys_played, tennis$average_rank, 
+     main="Average rank vs Average tourneys played by the athletes",
+     xlab="Average tourneys played by the athletes", ylab = "Average rank")
+
+plot(tennis$handedness, tennis$average_rank, 
+     type="p",
+     main="Average rank vs Handedness of athletes", 
+     xlab="Handedness of athletes", ylab = "Average rank")
+plot(tennis$backhand, tennis$average_rank, 
+     type="p",
+     main="Average rank vs Types of backhand of athletes", 
+     xlab="Types of backhand of athletes", ylab = "Average rank")
+
+```
+
+Boxplots for other numerical variables are also shown below. It's clear that there are some outliers in weight and height variables. Moreover, height and average tourneys played variables are left skewed since the first quantile deviates from median more. And the average rank is right skewed, which is consistent with the conclusion from histogram.
+
+```{r, message=FALSE, echo=FALSE, warning=FALSE, fig.cap="box plots for numerical variables"}
+par(mfrow=c(2,3))
+# response boxplot
+boxplot(tennis$average_rank,xlab='average rank', main = 'boxplot of average rank')
+# predictor boxplot
+boxplot(tennis$weight_kg, xlab='weight', main = 'boxplot of weight')
+boxplot(tennis$height_cm,xlab='height', main = 'boxplot of height')
+boxplot(tennis$average_age,xlab='average age', main = 'boxplot of average age')
+boxplot(tennis$average_tourneys_played,xlab='average tourneys played', main = 'boxplot of average tourneys played')
+```
+
+The following plot shows the scatterplot of average height and average rank in each category of handedness. Lines on plots are simple linear regression line between rank and height in two groups. We can see negative linear relations in both category, while the slope seems to be more negative in the right-handed group. This trend suggest that higher players are expected to have better rank, and a right handed player is more affected by height. This conclusion lines up with the hypothesis we had from the summary statistics. 
+
+```{r, message=FALSE, echo=FALSE, warning=FALSE, fig.cap="Scatterplot of height(cm) vs. average rank grouped by handedness", fig.width=8}
+tennis %>% ggplot(aes(x = height_cm, y = average_rank)) + geom_point() + geom_smooth(method='lm', formula= y~x) + ggtitle("Scatterplot of height(cm) vs. average rank grouped by handedness") + xlab("height") + ylab("average rank") + facet_wrap(tennis$handedness)
+```
+
+The following plot shows the scatterplot of average height and average rank in each category of backhand. Lines on plots are simple linear regression line between rank and height in two groups. This pair of plots present a interesting pattern, where we can see a negative linear relations in two-handed backhand category, while the slope become a slight positive one in the one-handed backhand group. This trend may suggest that the conclusion we had before saying that higher players are expected to have better rank is not suitable on one-handed backhand players. However, it's also possible that the slight positive trend is due to a lack of observations, since there are only 104 players in this category.
+
+```{r, message=FALSE, echo=FALSE, warning=FALSE, fig.cap="Scatterplot of height(cm) vs. average rank grouped by backhand", fig.width=8}
+tennis %>% ggplot(aes(x = height_cm, y = average_rank)) + geom_point() + geom_smooth(method='lm', formula= y~x) + ggtitle("Scatterplot of height(cm) vs. average rank grouped by backhand") + xlab("height") + ylab("average rank") + facet_wrap(tennis$backhand)
+```
+
+From the following max-min plot, we can see that the mean rank of left-handed players is better, while the difference between max and min is larger in right-handed players group. The means in two backhand categories are almost the same, while the difference between max and min is larger than in one-handed players group. This is interesting since one-handed players are the minority in the dataset, however, they had a larger max-min difference.
+
+```{r, eval = TRUE, echo = FALSE, fig.cap="Max-min plots for binary variables"}
+tennis %>% ggplot() + aes(x=handedness, y=average_rank) + stat_summary(fun.data = "mean_sdl", geom = "errorbar") + stat_summary(fun.data = "mean_sdl") + ggtitle("max-min plot for handedness and average_rank")
+```
+
+```{r, eval = TRUE, echo = FALSE, fig.cap="Max-min plots for binary variables"}
+tennis %>% ggplot() + aes(x=backhand, y=average_rank) + stat_summary(fun.data = "mean_sdl", geom = "errorbar") + stat_summary(fun.data = "mean_sdl") + ggtitle("max-min plot for backhand and average_rank")
+```
+
+```{r, class.source="code-r-small", message=FALSE, echo=FALSE, warning=FALSE}
+data_raw1 <- read_csv('data/player_overviews_unindexed_csv.csv') %>% select(player_id, flag_code)
+tennis <- tennis %>% left_join(data_raw1, by='player_id')
+
+p1 <- ggplot(tennis, aes(x=height_cm, y=average_rank, colour=handedness, shape=backhand)) + geom_point() + xlab("height(cm)") + ylab("average rank")
+p1 <- ggplotly(p1)
+
+p2 <- ggplot(tennis, aes(x=average_age, fill=flag_code)) + geom_histogram(bins=30) + xlab("average age")
+p2 <- ggplotly(p2)
+```
+
+
+## A set of interactive plots {.tabset}
+
+### Rank vs. Height
+
+- We will first explore the scatter plots for each player's average rank throughout 2017 versus his height in cm. The plot also contains the information about backhand and handedness, where the shape differs for different types of backhand and colour differs for different handedness. There is no obvious pattern in athletes who are right-handed and use one-handed backhand and athletes who are left-handed and use two-handed backhand. However, if we select out the scatter plot for "left-handed, one-handed backhand" athletes and "right-handed, two-handed backhand" athletes, we can see a negative linear pattern in the plot. And since the majority of athletes are right-handed and two-handed backhand, the general scatter plot also shows some negative relationship between each player's average rank and his height.
+
+```{r p1, echo=F}
+p1
+```
+
+### Age of players in different countries
+
+- Then we also want to take a look at the distribution of ages of athletes from different countries. We can see that the majority of athletes have their age between 25 and 30. And since there are large pink on the bottom, we know that USA have a lot of tennis players. Similarly, we can also find that France, Britain, and Australia have a lot of tennis players. Theses are the countries holding four Grand Slam Tournaments in tennis. More information could be explored if we select certain country to see their distribution in this histogram.
+
+```{r p2, echo=F}
+p2
+```
+
+### Rank vs. Height in different countries
+
+- We can also look at our three numerical variables simultaneously. The following plot shows the relationship between athletes height and rank in different countries, with the size of the circle indicating the age of that athletes. We can see that an athlete from MAR is significantly older than others. And we can also see that lots of older players had a better ranking in the bottom, this may suggest that older players with more experience would be more likely to obtain a better ranking.
+
+```{r p3, message=FALSE, warning=FALSE, echo=F}
+tennis %>% plot_ly(x=~height_cm, y=~average_rank, color = ~flag_code, type="scatter", mode="markers", size = ~average_age, sizes=c(5,70), marker=list(sizemode="diameter", opacity=0.5)) %>%
+  layout(xaxis = list(title = 'Height (cm)'), 
+         yaxis = list(title = 'Player rank'), legend = list(title=list(text='<b> Countries </b>')))
+```
+
 
 ## {-}
-
-<br>
-
-Done!
-
-<br>
-<br>
