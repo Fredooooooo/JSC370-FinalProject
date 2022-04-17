@@ -20,4 +20,90 @@ Welcome to my JSC370 Final Project website. The project involves a research into
 
 Tennis is a popular sport around the world, and one of the worldwide top-tier tennis tours for men is ATP tour organized by the Association of Tennis Professionals. Those professional tennis players who maintained a high ranking in ATP seem to have something in common. There are already research studying the Association between body height and serve speed in elite tennis players. For example, body height of the men explained 27% of the variance of fastest serve in a match (Vaverka & Cernosek, 2013). Serving speed may not directly contribute to a tennis player’s ranking in tournaments, and there could be more potential factors affecting the performance of tennis players. Therefore, we raise our research question as how could some physical factors and experience of a tennis player be used to explain the variation observed in rankings of 639 players participated in 2017 ATP tournaments. Moreover, if given the physical characteristics and experience of a player, can we predict his ranking in a range of 2074 tennis players from ATP? By exploring the relationship between tennis players’ physical characteristics, experience, and their performance, we could help coaches to better recognize if someone could be a good tennis player and inspire tennis players what they can improve on in order to making progress. The goal of this research is to find a model that is not overly complicated, but also having reasonable properties required to make good predictions.
 
+The variables we used in the dataset are: \
+“weight_kg”: body weight in kg of the tennis player in 2017. \
+“height_cm”: body height in cm of the tennis player in 2017. \
+“handedness”: whether the tennis player is left-handed or right-handed. \
+“average_age”: the average age of the tennis player during the 2017 tournament period. For example, some players were 24 years old during the first few tournaments held in 2017 and grew to 25 years old later in the 2017. In those cases, their average age would become decimals. \
+“average_tourneys_played”: the average number of tourneys played during the 2017 period. \
+“backhand”: whether the player is using one-hand backhand or two-hand backhand. \
+“average_rank”: the average rank a tennis player achieved during the whole 2017 tournament period. This is a continuous variable since the rank is averaged over the whole period. This is our response variable. \
+
+<br>
+
+<br>
+
+# Interactive Visuals
+
+```{r, echo=FALSE, warning=F, message=F}
+library(dplyr)
+library(data.table)
+library(tidyverse)
+library(dplyr)
+library(plotly)
+library(DT)
+library(knitr)
+```
+
+```{r, class.source="code-r-small", message=FALSE, echo=FALSE, warning=FALSE}
+tennis <- read.csv('data/cleaned_dataset.csv')
+tennis$handedness <- as.factor(tennis$handedness)
+tennis$backhand <- as.factor(tennis$backhand)
+data_raw1 <- read_csv('data/player_overviews_unindexed_csv.csv') %>% select(player_id, flag_code)
+tennis <- tennis %>% left_join(data_raw1, by='player_id')
+
+p1 <- ggplot(tennis, aes(x=height_cm, y=average_rank, colour=handedness, shape=backhand)) + geom_point() + xlab("height(cm)") + ylab("average rank")
+p1 <- ggplotly(p1)
+
+p2 <- ggplot(tennis, aes(x=average_age, fill=flag_code)) + geom_histogram(bins=30) + xlab("average age")
+p2 <- ggplotly(p2)
+```
+
+
+## A set of interactive plots {.tabset}
+
+### Rank vs. Height
+
+- We will first explore the scatter plots for each player's average rank throughout 2017 versus his height in cm. The plot also contains the information about backhand and handedness, where the shape differs for different types of backhand and colour differs for different handedness. There is no obvious pattern in athletes who are right-handed and use one-handed backhand and athletes who are left-handed and use two-handed backhand. However, if we select out the scatter plot for "left-handed, one-handed backhand" athletes and "right-handed, two-handed backhand" athletes, we can see a negative linear pattern in the plot. And since the majority of athletes are right-handed and two-handed backhand, the general scatter plot also shows some negative relationship between each player's average rank and his height.
+
+```{r p1, echo=F}
+p1
+```
+
+### Age of players in different countries
+
+- Then we also want to take a look at the distribution of ages of athletes from different countries. We can see that the majority of athletes have their age between 25 and 30. And since there are large pink on the bottom, we know that USA have a lot of tennis players. Similarly, we can also find that France, Britain, and Australia have a lot of tennis players. Theses are the countries holding four Grand Slam Tournaments in tennis. More information could be explored if we select certain country to see their distribution in this histogram.
+
+```{r p2, echo=F}
+p2
+```
+
+### Rank vs. Height in different countries
+
+- We can also look at our three numerical variables simultaneously. The following plot shows the relationship between athletes height and rank in different countries, with the size of the circle indicating the age of that athletes. We can see that an athlete from MAR is significantly older than others. And we can also see that lots of older players had a better ranking in the bottom, this may suggest that older players with more experience would be more likely to obtain a better ranking.
+
+```{r p3, message=FALSE, warning=FALSE, echo=F}
+tennis %>% plot_ly(x=~height_cm, y=~average_rank, color = ~flag_code, type="scatter", mode="markers", size = ~average_age, sizes=c(5,70), marker=list(sizemode="diameter", opacity=0.5)) %>%
+  layout(xaxis = list(title = 'Height (cm)'), 
+         yaxis = list(title = 'Player rank'), legend = list(title=list(text='<b> Countries </b>')))
+```
+
+
+## {-}
+
+
+# Key Findings
+1. Athletes are expected to have better rank if he played more tourneys while holding other variables the same.
+2. Athletes are expected to have better rank if he is older holding other variables the same.
+3. Athletes are expected to have better rank if he is higher holding other variables the same.
+4. The test MSE of the Random Forest method is 81997.48. The random forest model explained 66.17% of variance in train dataset.
+5. The test MSE for XgBoost model is calculated as 79707.52. After fitting the xgboost model with the whole dataset, the RMSE is 278.0541.
+6. Both Random Forest and XgBoost model shows that the average number of tourneys played by the player is the most important predictor in predicting the rank.
+
+<br>
+
+# Download the report
+
+https://github.com/Fredooooooo/JSC370-FinalProject/blob/main/written-report.pdf
+
 <br>
